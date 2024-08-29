@@ -7,7 +7,6 @@ import pyfiglet
 import os
 import enemy_stats
 
-
 # Class representing a location in the game
 class Location:
     def __init__(self, name, description):
@@ -56,6 +55,12 @@ class Player:
 
     def gain_xp(self, amount):
         # Add the given amount of XP to the player's current XP
+        """
+        Add the given amount of XP to the player's current XP.
+
+        Args:
+            amount (int): The amount of XP to add to the player's current XP.
+        """
         stats_dict["xp"] += amount
         # Print out a message to the player that they gained XP
         print(f"You gained {amount} XP!")
