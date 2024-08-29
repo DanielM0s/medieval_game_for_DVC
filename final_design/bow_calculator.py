@@ -5,7 +5,38 @@ from typing import List, Optional
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from PIL import Image, ImageDraw
+from enemy_stats import enemy_dict
+from enemy_stats import inventory as enemy_inventory
+from character_stats import inventory, stats_dict
 
+def archer_fight():
+    """Allow the user to choose an enemy to fight with an archer."""
+    from character_stats import inventory
+    bow_list = [item for item in inventory if item.name == "Bow"]
+    arrow_list = [item for item in inventory if item.name == "arrow x10"]
+    if not bow_list or not arrow_list:
+        print("You need a Bow and an arrow to fight")
+        return
+    bow = Bow(bow_list[0].name, bow_list[0].max_draw_force, bow_list[0].draw_length)
+    arrow = Arrow(arrow_list[0].weight)
+    enemies = list(enemy_dict.keys())
+    while True:
+        while True:
+            try:
+                print("Choose an enemy to fight:")
+                for i, (name, stats) in enumerate(enemy_dict.items()):
+                    print(f"{i+1}. {name}")
+                enemy_index = int(input("Enter the number of the enemy: "))
+                if 0 <= enemy_index < len(enemies):
+                    break
+                else:
+                    print("Invalid input. Please enter a number between 0 and", len(enemies) - 1)
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+        enemy_name = enemies[enemy_index]
+        enemy = Enemy(enemy_name)
+        archer = Archer(bow, arrow, enemy, 100)
+        archer.attack()
 
 # Define decorators for user input validation
 def validate_positive_integer(func):
@@ -45,18 +76,38 @@ class Bow:
 
 
 class Enemy:
-    def __init__(self, height: float, distance: float):
-        self.height = height
-        self.distance = distance
+    def __init__(self, enemy_name):
+        # takes a enemy name and sets the enemy's stats
+        stats = enemy_dict[enemy_name]
+        self.name = enemy_name
+        self.names = stats["name"]
+        self.health = stats["health"]
+        self.strength = stats["strength"]
+        self.dexterity = stats["dexterity"]
+        self.distance = stats["distance"]
+        self.height = 2
+        self.sword = enemy_inventory["Ilkwa"]
+        self.xp = stats["xp"]
+    
+    def check_health(self, health):
+        # checks if the enemy's health is 0 or less and returns False if it is
+        if health <= 0:
+            del enemy_dict[self.name]
+            stats_dict["xp"] += self.xp
+            return False
+        else:
+            return True
 
+        
 
+hint = False
 class Archer:
     def __init__(self, bow: Bow, arrow: Arrow, enemy: Enemy, health: int):
         self.bow = bow
         self.arrow = arrow
         self.enemy = enemy
         self.health = health
-
+    
     # Calculate the safe square root of a number
     def safe_sqrt(self, number: float) -> Optional[float]:
         try:
@@ -87,36 +138,41 @@ class Archer:
     def plot_results(self, distances: List[float], heights: List[float]):
         fig, ax = plt.subplots()
 
-        line, = ax.plot([], [], color='blue', marker='o')
-        enemy_line, = ax.plot([], [], color='red', marker='o')
+        ax.plot(distances, heights, color='blue', marker='o')
+        ax.plot([self.enemy.distance], [self.enemy.height], color='red', marker='o')
+
         ax.set_xlabel('Distance (m)')
-        ax.set_xlim(min(distances), max(distances))
+        ax.set_xlim(0, self.enemy.distance)
         ax.set_ylabel('Height (m)')
-        ax.set_ylim(min(min(0)), max(max(heights), self.enemy.height))
+        ax.set_ylim(0, max(max(heights), self.enemy.height))
 
         ax.grid(True, linestyle='dashed', linewidth=0.5, color='gray', alpha=0.7)
 
-        def update(frame):
-            line.set_data(distances[:frame+1], heights[:frame+1])
-            enemy_line.set_data([self.enemy.distance], [self.enemy.height])
-            return line, enemy_line,
-
-        ani = animation.FuncAnimation(fig, update, frames=len(distances)-1, interval=1, repeat=False)
-
-        def on_animation_finished(event):
-            plt.close()
-
-        ani.event_source.on_finished = on_animation_finished
         plt.show()
 
     # Attack the enemy
     def attack(self):
         try:
+            arrow_amount = sum(1 for item in inventory if item.name == "arrow x10")
+            if arrow_amount > 0:
+                arrows = arrow_amount * 10
+            elif arrow_amount <= 0:
+                print("You don't have any arrows.")
+                print("please go to the village to buy some arrows")
+                return
             while True:
                 try:
-                    print(f"Enemy distance: {self.enemy.distance} Enemy height: {self.enemy.height}")
-                    hint = input("would you like to activate hints? y/n ")
-                    if hint.lower() == "y":
+                    if not enemy_dict:
+                        print("You have defeated all the enemies. Well done!")
+                        return
+                    
+
+                    
+
+                    enemies = enemy_dict
+                    enemy = self.enemy
+                    print(f"Enemy distance: {enemy.distance} Enemy height: {enemy.height}")
+                    if hint == True:
                         print("hint: the pull force is the force that makes the string pull back")
                         if input("would you like another hint? y/n ") == "y":
                             print("hint: the maximum pull force is 710N, and the minimum pull force is 400N")
@@ -124,24 +180,62 @@ class Archer:
                     length = self._get_valid_integer_input("how far do you pull the string back in cm? ")
                     if length > self.bow.max_pull_distance:
                         print("Your string snaps, you now need to replace it. Next time don't pull it back too far")
-                        break
+                        escape = input("would you like to escape back to your own village to buy a new bow, or do you want to use your sword, 1. escape, 2. use sword")
+                        if escape == "1":
+                            if random.randint(0, stats_dict["wisdom"]) <= 10:
+                                print("you manage to escape back to your own village")
+                                from final_beginning import home
+                                home()
+                            else:
+                                print("you failed to escape back to your own village")
+                                print("the enemy captures you and kills you")
+                                exit()
+                        elif escape == "2":
+                            return
                     angle = self._get_valid_integer_input("what angle do you want to shoot the arrow? ")
-                    distances = [i for i in range(0, int(self.enemy.distance) + 1, 2)]
+                    distances = [i for i in range(0, int(enemy.distance) + 1, 2)]
                     heights = [
                         self.safe_calculate(force, length, self.arrow.weight, angle, dist) for dist in distances
                     ]
                     self.plot_results(distances, heights)
                     final_height = heights[-1]
-                    if final_height <= self.enemy.height and final_height > 0:
+                    if final_height <= enemy.height and final_height > 0:
                         print("your arrow hits the enemy")
-                        damage = force / 10
+                        damage = force / 5
                         print(f"You hit the enemy with {damage} N force.")
+                        enemy_dict[enemy.name]["health"] -= damage
+                        if enemy_dict[enemy.name]["health"] <= 0:
+                            print("you killed the enemy")
+                            enemies.pop(enemy.name)
+                            break
                     else:
                         print("your arrow misses the enemy")
                         if final_height > self.enemy.height:
                             print(f"your arrow flies {abs(final_height - self.enemy.height)} m above the enemy")
                         elif final_height < 0:
                             print(f"your arrow does not reach the enemy, try aiming higher")
+                    arrows -= 1
+                    print(f"you have {arrows} arrows left")
+                    archer_fight()
+                    if arrows <= 0:
+                        options = [
+                            "Use your sword to fight the enemy",
+                            "Go back to the village",
+                        ]
+                        print("You have used up all your arrows, you can choose to either: ")
+                        for i, option in enumerate(options, start=1):
+                            print(f"{i}. {option}")
+
+                        choice = self._get_valid_integer_input(
+                            "Enter the number of your choice: ",
+                            valid_options=list(range(1, len(options) + 1)),
+                        )
+
+                        if choice == 1:
+                            from fighting_final import fight as sword_fight
+                            sword_fight()
+                        elif choice == 2:
+                            break
                 except Exception:
                     traceback.print_exc()
                     input("press enter to continue")
@@ -198,4 +292,5 @@ class Archer:
                     print("Invalid input. Please enter an angle between 0 and 360.")
             except ValueError:
                 print("Invalid input. Please enter an integer.")
+
 
