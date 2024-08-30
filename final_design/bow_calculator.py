@@ -11,32 +11,79 @@ from character_stats import inventory, stats_dict
 
 def archer_fight():
     """Allow the user to choose an enemy to fight with an archer."""
-    from character_stats import inventory
     bow_list = [item for item in inventory if item.name == "Bow"]
     arrow_list = [item for item in inventory if item.name == "arrow x10"]
     if not bow_list or not arrow_list:
         print("You need a Bow and an arrow to fight")
         return
-    bow = Bow(bow_list[0].name, bow_list[0].max_draw_force, bow_list[0].draw_length)
-    arrow = Arrow(arrow_list[0].weight)
     enemies = list(enemy_dict.keys())
-    while True:
-        while True:
-            try:
-                print("Choose an enemy to fight:")
-                for i, (name, stats) in enumerate(enemy_dict.items()):
-                    print(f"{i+1}. {name}")
-                enemy_index = int(input("Enter the number of the enemy: "))
-                if 0 <= enemy_index < len(enemies):
-                    break
+    learn = input("Would you like to learn how to use the bow? (y/n) ")
+    if learn == "y":
+        print("The distance your arrow is dependant on three factors, how much force you apply, how far you pull the string back and the angle at which you fire the bow. Beware, if you apply too much force, or pull the string back too far, you will break the bow and will have to buy a new one. If your bow breaks you will have to use a melee weapon in order to defen yourself from the enemy. the recommended angle to shoot the bow is 45 degrees.")
+    elif learn == "n":
+        print("Good luck!")
+    do = int(input("Would you like to: 1. Attack 2. Eat food 3. Run? "))
+    while True:    
+        try:
+            if do == 1:
+                while True:
+                    try:
+                        print("Choose an enemy to fight:")
+                        for i, name in enumerate(enemies):
+                            print(f"{i+1}. {name}")
+                        
+                        #This input will ask the user which enemy they want to attack
+                        target = int(input("Which enemy do you want to attack? "))
+                        #This if statement will check if the user's input is valid and if it is not then it will print an error message and continue to the next iteration of the loop
+                        if target < 1 or target > len(enemies):
+                            print("Invalid input")
+                            continue
+                        #This line of code will get the name of the enemy that the user wants to attack and assign it to the variable enemy_name
+                        enemy_name = enemies[target - 1]
+                        #This line of code will create a new instance of the Enemy class and assign it to the variable enemy
+                        enemy = Enemy(enemy_name)
+                    except ValueError:
+                        print("Invalid input. Please enter a number.")
+                    for item in inventory:
+                        if item.name == "Bow":
+                            bow = Bow(item.name, item.length, item.draw_length)
+                    for item in inventory:
+                        if item.type == "arrow":
+                            arrow = Arrow(item.weight)
+                    enemy = Enemy(enemy_name)
+                    archer = Archer(bow, arrow, enemy)
+                    archer.attack()
+            elif do == 2:
+                print("You have the following food items in your inventory:")
+                options = []
+                for i, item in enumerate(inventory):
+                    if item.type == "food":
+                        print(f"{i+1}. {item.name}")
+                        options.append(i+1)
+                eat = int(input("What food do you want to eat? Enter the number: "))
+                if eat in options:
+                    item = next((item for item in inventory if inventory.index(item) == eat-1), None)
+                    bonus = item.health_increase
+                    bonusstr = item.strength_increase
+                    print(f"You eat the {item.name} and gain {bonus} health and {bonusstr} strength.")
+                    stats_dict["strength"] += bonusstr
+                    stats_dict["health"] += bonus
+                    inventory.remove(item)
+                    continue
+            elif do == 3:
+                roll = random.randint(1,20)
+                if roll + stats_dict["dexterity"] >= 15:
+                    print("You successfully run away.")
+                    return
                 else:
-                    print("Invalid input. Please enter a number between 0 and", len(enemies) - 1)
-            except ValueError:
-                print("Invalid input. Please enter a number.")
-        enemy_name = enemies[enemy_index]
-        enemy = Enemy(enemy_name)
-        archer = Archer(bow, arrow, enemy, 100)
-        archer.attack()
+                    print("You fail to run away. The enemy captures and kills you.")
+                    exit()
+            else:
+                print("Invalid input. Please try again.")
+                continue
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+            continue
 
 # Define decorators for user input validation
 def validate_positive_integer(func):
@@ -102,12 +149,12 @@ class Enemy:
 
 hint = False
 class Archer:
-    def __init__(self, bow: Bow, arrow: Arrow, enemy: Enemy, health: int):
+    def __init__(self, bow: Bow, arrow: Arrow, enemy: Enemy):
         self.bow = bow
         self.arrow = arrow
         self.enemy = enemy
-        self.health = health
-    
+        self.strength = stats_dict["strength"]
+        self.dexterity = stats_dict["dexterity"]
     # Calculate the safe square root of a number
     def safe_sqrt(self, number: float) -> Optional[float]:
         try:
@@ -160,14 +207,12 @@ class Archer:
                 print("You don't have any arrows.")
                 print("please go to the village to buy some arrows")
                 return
+
             while True:
                 try:
                     if not enemy_dict:
                         print("You have defeated all the enemies. Well done!")
                         return
-                    
-
-                    
 
                     enemies = enemy_dict
                     enemy = self.enemy
@@ -176,22 +221,14 @@ class Archer:
                         print("hint: the pull force is the force that makes the string pull back")
                         if input("would you like another hint? y/n ") == "y":
                             print("hint: the maximum pull force is 710N, and the minimum pull force is 400N")
+                    force = self.get_valid_force_input("how much force do you want to apply? ")
+                    length = self.get_valid_length_input("how far do you pull the string back in cm? ")
+                    angle = self.get_valid_angle_input("what angle do you want to shoot the arrow? ")
                     force = self._get_valid_integer_input("how much force do you want to apply? ")
+                    validate_range(400, 710)(force)
+                    validate_positive_integer(force)
                     length = self._get_valid_integer_input("how far do you pull the string back in cm? ")
-                    if length > self.bow.max_pull_distance:
-                        print("Your string snaps, you now need to replace it. Next time don't pull it back too far")
-                        escape = input("would you like to escape back to your own village to buy a new bow, or do you want to use your sword, 1. escape, 2. use sword")
-                        if escape == "1":
-                            if random.randint(0, stats_dict["wisdom"]) <= 10:
-                                print("you manage to escape back to your own village")
-                                from final_beginning import home
-                                home()
-                            else:
-                                print("you failed to escape back to your own village")
-                                print("the enemy captures you and kills you")
-                                exit()
-                        elif escape == "2":
-                            return
+                    validate_range(0, self.bow.max_pull_distance)(length)
                     angle = self._get_valid_integer_input("what angle do you want to shoot the arrow? ")
                     distances = [i for i in range(0, int(enemy.distance) + 1, 2)]
                     heights = [
@@ -226,6 +263,7 @@ class Archer:
                         for i, option in enumerate(options, start=1):
                             print(f"{i}. {option}")
 
+                        choice = self.get_valid_integer_input(
                         choice = self._get_valid_integer_input(
                             "Enter the number of your choice: ",
                             valid_options=list(range(1, len(options) + 1)),
@@ -242,6 +280,7 @@ class Archer:
         except Exception:
             traceback.print_exc()
 
+    def get_valid_integer_input(self, prompt: str, valid_options: List[int] = []) -> int:
     # Get valid integer input from the user
     @validate_positive_integer
     def _get_valid_integer_input(self, prompt: str) -> int:
@@ -259,24 +298,62 @@ class Archer:
         while True:
             user_input = input(prompt)
             try:
+                user_input = int(input(prompt))
+                if valid_options and user_input not in valid_options:
+                    raise ValueError
+                return user_input
                 valid_input = int(user_input)
                 if 400 <= valid_input <= 710:
                     return valid_input
                 else:
                     print("Invalid input. Please enter a force between 400 and 710.")
+                    for item in inventory[:]:
+                        if item.name == "Bow":
+                            inventory.remove(item)
+                    escape = input("would you like to escape back to your own village to buy a new bow, or do you want to use your sword, 1. escape, 2. use sword")
+                    if escape == "1":
+                        if random.randint(0, self.dexterity) <= 10:
+                            print("you manage to escape back to your own village")
+                            from final_beginning import home
+                            home()
+                        else:
+                            print("you failed to escape back to your own village")
+                            print("the enemy captures you and kills you")
+                            exit()
+                    elif escape == "2":
+                        from fighting_final import fight as sword_fight
+                        sword_fight()
             except ValueError:
                 print("Invalid input. Please enter an integer.")
+                if valid_options:
+                    print(f"Valid options are: {', '.join(map(str, valid_options))}")
 
-    @validate_range(0, 100)
+    @validate_range(0, 76)
     def _get_valid_length_input(self, prompt: str) -> int:
         while True:
             user_input = input(prompt)
             try:
                 valid_input = int(user_input)
-                if 0 <= valid_input <= 100:
+                if 0 <= valid_input <= 76:
                     return valid_input
                 else:
-                    print("Invalid input. Please enter a length between 0 and 100.")
+                    print("Your string snaps, you now need to replace it. Next time don't pull it back too far")
+                    for item in inventory[:]:
+                        if item.name == "Bow":
+                            inventory.remove(item)
+                    escape = input("would you like to escape back to your own village to buy a new bow, or do you want to use your sword, 1. escape, 2. use sword")
+                    if escape == "1":
+                        if random.randint(0, self.dexterity) <= 10:
+                            print("you manage to escape back to your own village")
+                            from final_beginning import home
+                            home()
+                        else:
+                            print("you failed to escape back to your own village")
+                            print("the enemy captures you and kills you")
+                            exit()
+                    elif escape == "2":
+                        from fighting_final import fight as sword_fight
+                        sword_fight()
             except ValueError:
                 print("Invalid input. Please enter an integer.")
 
@@ -286,11 +363,14 @@ class Archer:
             user_input = input(prompt)
             try:
                 valid_input = int(user_input)
-                if 0 <= valid_input <= 360:
+                if 0 <= valid_input <= 90:
                     return valid_input
+                elif 90 < valid_input <= 360:
+                    print("the arrow goes straight up and lands somewhere behind you")
                 else:
                     print("Invalid input. Please enter an angle between 0 and 360.")
             except ValueError:
                 print("Invalid input. Please enter an integer.")
+
 
 

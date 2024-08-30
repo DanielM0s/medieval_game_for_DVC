@@ -65,9 +65,10 @@ class MedievalShopItem:
     
     # Define the Food class, which is a subclass of MedievalShopItem
 class Food(MedievalShopItem):
-    def __init__(self, name, price, weight, health_increase, type):
+    def __init__(self, name, price, weight, health_increase, strength_increase, type):
         super().__init__(name, price, weight, type)
         self.health_increase = health_increase
+        self.strength_increase = strength_increase
 
     def increase_health(self, player):
         """
@@ -75,39 +76,44 @@ class Food(MedievalShopItem):
         """
         player["health"] += self.health_increase
 
+    def increase_strength(self, player):
+        """
+        Increases the player's strength by the amount specified in the food item.
+        """
+        player["strength"] += self.strength_increase
+
 class Sword(MedievalShopItem):
     def __init__(self, name, price, weight, type, length):
         super().__init__(name, price, weight, type, length)
 
 class Bow(MedievalShopItem):
-    def __init__(self, name, price, weight, draw_length, max_draw_force, type):
-        super().__init__(name, price, weight, draw_length, max_draw_force, type)
+    def __init__(self, name, price, weight, type, draw_length, max_draw_force):
+        super().__init__(name, price, weight, type, draw_length, max_draw_force)
 class Arrow(MedievalShopItem):
     def __init__(self, name, price, weight, type):
         super().__init__(name, price, weight, type)
 # Create instances of the classes
 items = {
-    "Ilkwa": {"price": 50, "weight": 3, "length": 0.9, "type": "sword"},
-    "Assegai": {"price": 100, "weight": 0.5, "length": 1.97, "type": "sword"},
-    "Knobkerrie": {"price": 150, "weight": 5, "length": 0.52, "type": "sword"},
-    "shield": {"price": 20, "weight": 5, "protection": 5, "type": "shield"},
+    "Ilkwa (short spear)": {"price": 50, "weight": 3, "length": 0.9, "type": "sword"},
+    "Assegai (spear)": {"price": 100, "weight": 0.5, "length": 1.97, "type": "sword"},
+    "Knobkerrie (club)": {"price": 150, "weight": 5, "length": 0.52, "type": "sword"},
+    "isihlangu (shield)": {"price": 20, "weight": 5, "protection": 5, "type": "shield"},
     "armour": {"price": 150, "weight": 10, "protection": 10, "type": "shield"},
     "Bow": {"price": 50, "weight": 13.6, "draw length": 76, "max draw force": 710, "type": "bow"},
     "arrow x10": {"price": 10, "weight": 0.1, "type": "arrow"},
-    "bread": {"price": 2, "weight": 0.5, "health_increase": 5, "type": "food"},
-    "pap": {"price": 10, "weight": 0.5, "health_increase": 30, "type": "food"},
-    "wild meat": {"price": 5, "weight": 0.2, "health_increase": 5, "type": "food"},
-    "egg": {"price": 3, "weight": 0.1, "health_increase": 2, "type": "food"},
-    "bread loaf": {"price": 10, "weight": 0.5, "health_increase": 15, "type": "food"},
-    "apples": {"price": 10, "weight": 0.5, "health_increase": 10, "type": "food"},
-    "health potion": {"price": 10, "weight": 0.1, "health_increase": 20, "type": "food"},
+    "mielie bread": {"price": 2, "weight": 0.5, "health_increase": 5, "strength_increase": 30, "type": "food"},
+    "pap": {"price": 30, "weight": 0.5, "health_increase": 30, "strength_increase": 300, "type": "food"},
+    "droeworse": {"price": 5, "weight": 0.2, "health_increase": 5, "strength_increase": 100, "type": "food"},
+    "egg": {"price": 3, "weight": 0.1, "health_increase": 2, "strength_increase": 20, "type": "food"},
+    "rusk": {"price": 10, "weight": 0.5, "health_increase": 15, "strength_increase": 40, "type": "food"},
+    "apples": {"price": 10, "weight": 0.5, "health_increase": 10, "strength_increase": 20, "type": "food"},
 }
 
 shop = MedievalShop("The Medieval Shop")
 for name, item_info in items.items():
     item_type = item_info.get("type")
     if item_type == "food":
-        food_item = Food(name, item_info["price"], item_info["weight"], item_info["health_increase"], item_info.get("type"))
+        food_item = Food(name, item_info["price"], item_info["weight"], item_info["health_increase"], item_info["strength_increase"], item_info.get("type"))
         shop.add_item(food_item)
     elif item_type == "shield":
         shield_item = MedievalShopItem(name, item_info["price"], item_info["weight"], item_info["protection"], item_info.get("type"))
@@ -115,7 +121,7 @@ for name, item_info in items.items():
         sword_item = Sword(name, item_info["price"], item_info["weight"], item_info.get("type"), item_info["length"])
         shop.add_item(sword_item)
     elif item_type == "bow":
-        bow_item = Bow(name, item_info["price"], item_info["weight"], item_info.get("type"), item_info.get("draw length"), item_info.get("max draw force"))
+        bow_item = Bow(name, item_info["price"], item_info["weight"], item_info.get("type"), item_info["draw length"], item_info["max draw force"])
         shop.add_item(bow_item)
     elif item_type == "arrow":
         arrow_item = Arrow(name, item_info["price"], item_info["weight"], item_info.get("type"))
@@ -156,9 +162,11 @@ def medieval_shop():
 
 # Define the buy_item function
 def buy_item(coins, inventory, shop):
-    print("Which item would you like to buy?")
+    print("Which item would you like to buy? (type 0 to exit)")
+
     for i, item in enumerate(shop.items):
         print(f"{i+1}. {item.name}: {item.price} coins")
+        
     try:
         choice = int(input("Enter the number of the item you want: ")) - 1
         if 0 <= choice < len(shop.items):
@@ -184,6 +192,8 @@ def buy_item(coins, inventory, shop):
                     print("You did not buy the item")
             else:
                 print("You do not have enough money for that item.")
+        elif choice == 0:
+            return
         else:
             print("Invalid choice.")
     except ValueError:
@@ -246,12 +256,12 @@ def upgrade_inventory(coins, inventory, shop):
                 item_data.length += 1
                 coins -= item_price * item_quantity
                 print(f"You upgraded your {item_data.name}! the {item_data.name} now has a length of {item_data.length:.1f} cm.")
-            elif item_data.name == "bow":
+            elif item_data.type == "bow":
                 item_data.draw_length += 1
                 item_data.max_draw_force += 1
                 coins -= item_price * item_quantity
                 print(f"You upgraded your bow! Your bow now has a draw length of {item_data.draw_length:.1f} cm and a max draw force of {item_data.max_draw_force:.1f} N.")
-            elif item_data.name == "arrow":
+            elif item_data.type == "arrow":
                 item_data.weight -= 0.1
                 coins -= item_price * item_quantity
                 print(f"You upgraded your arrow! Your arrow now weighs {item_data.weight:.1f} g.")

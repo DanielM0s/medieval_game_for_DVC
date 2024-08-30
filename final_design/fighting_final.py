@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw
 
 
 
+
 class character:
     # the character class, which contains the player's stats
     def __init__(self, stats_dict):
@@ -79,9 +80,6 @@ class character:
             exit()
         else:
             return True
-    
-    
-
 
 
 class Enemy:
@@ -102,6 +100,7 @@ class Enemy:
         self.wisdom = stats["wisdom"]
         self.sword = enemy_inventory["Ilkwa"]
         self.xp = stats["xp"]
+        self.coins = stats["coins"]
         self.stunned = False
         self.poisoned = False
         self.disarmed = False
@@ -112,6 +111,9 @@ class Enemy:
             del enemy_dict[self.name]
             stats_dict["xp"] += self.xp
             print(f"{self.name} has been defeated!")
+            print(f"you have earned {self.coins} coins!")
+            stats_dict["coins"] += self.coins
+            
             return False
         else:
             return True
@@ -148,9 +150,10 @@ def attack_menu():
         return random.choice(list(attack_dict.values()))
     return random_attack(attack_types)
 
-
+enemy_backup = 0
 def fight():
     # a function to start a fight
+    enemy_backup = 0
     enemies = enemy_dict
     stun_time = 0
     enemy_stun_time = 0
@@ -162,6 +165,7 @@ def fight():
         #If the enemy's health is 0 or less they have been defeated and are removed from the list of enemies
         if Enemy.check_health == False:
             print("the enemy has been defeated, well done")
+            enemy_backup += enemy["coins"]
             enemies.pop(Enemy.name)
             break
         #If the enemy's health is not 0 or less then the fight continues
@@ -181,7 +185,7 @@ def fight():
             print("5. Feint: a confusing attack - this is a good attack to use when you want to confuse an enemy and make them miss their attack.")
             print("6. Guard Break: a disarming attack - this is a good attack to use when you want to disarm an enemy and make them unable to attack you.")
             print("Remember, the best way to win a fight is to use the right attack type at the right time.")
-            print("when you start you will get a choice of wich attack type you want to use. You then type how much force you want to use in Newtons, which is then taken away from your strength. 20 Newtons is recommended as the amount of force, because it is enough to deal a good amount of damage, without depleting your strength too much. If you are starting to run low on strength, you can type 2 in the first menu, which then allows you to eat any food you have bought, if you don't have any food you can type 3 and try to escape, if you don't manage to escape you will be killed. Once you have defeated all the enemies it is a good idea to go back to your village(beware you may be attacked again) to replenish your food, by going to the village entrance and typing in the number of your village.")
+            print("when you start you will get a choice of wich attack type you want to use. You then type how much force you want to use in Newtons, which is then taken away from your strength, then multiplied by the length of your weapon to find the damage you will deal. 20 Newtons is recommended as the amount of force, because it is enough to deal a good amount of damage, without depleting your strength too much. If you are starting to run low on strength, you can type 2 in the first menu, which then allows you to eat any food you have bought, if you don't have any food you can type 3 and try to escape, if you don't manage to escape you will be killed. Once you have defeated all the enemies it is a good idea to go back to your village(beware you may be attacked again) to replenish your food, by going to the village entrance and typing in the number of your village.")
         #This while loop will continue to run until the player has defeated the current enemy
         while True:
             if stun_time == 1:
@@ -285,7 +289,7 @@ def fight():
                         #This line of code will get a random number between 8 and the enemy's dexterity and assign it to the variable enemy_chance_of_block
                         enemy_chance_of_block = random.randint(8, enemy.dexterity)
                         #This line of code will get a random number between 10 and the enemy's strength and assign it to the variable enemy_block_amount
-                        enemy_block_amount = random.randint(10, enemy.strength)  
+                        enemy_block_amount = random.randint(8, enemy.strength)  
                         #This dictionary will contain all the attacks that the player can use and their stats
                         attack_types = {
                         "1": {"name": "Slash", "damage": 1.2, "block": 0.8, "status_effect": None},
@@ -321,23 +325,40 @@ def fight():
                         #This if statement will check if the player has any strength left
                         if cha.strength <= 0:
                             #This input will ask the user if they want to try and escape
-                            back = input("you have no strength left to fight. Would you like to try and escape? (y/n) ")
-                            #This if statement will check if the user wants to try and escape
-                            if back == "y":
-                                #This line of code will get a random number between 1 and the player's dexterity and assign it to the variable escape_chance
-                                escape_chance = random.randint(1, cha.dexterity)
-                                #This if statement will check if the escape chance is greater than 5
-                                if escape_chance > 5:
-                                    print("You have escaped")
-                                    #This line of code will call the game_loop function from the final_beginning file and pass the player as an argument
-                                    return
-                                elif escape_chance <= 5:
-                                    print("You have failed to escape")
-                                    print("you are captured by the enemy and killed")
+                            if any(item["type"] == "food" for item in inventory):
+                                print("You have some food in your inventory. You can eat it to regain health.")
+                                for item in inventory:
+                                    if item["type"] == "food":
+                                        print(item["name"])
+                                food_choice = input("Which food do you want to eat? ")
+                                for item in inventory:
+                                    if item["name"] == food_choice and item["type"] == "food":
+                                        cha.health += item["health_increase"]
+                                        print(f"You regained {item['health_increase']} health.")
+                                        inventory.remove(item)
+                                        break
+                                else:
+                                    print("You don't have that food in your inventory.")
+                            else:
+                                print("You don't have any food in your inventory.")
+                            if cha.strength <= 0:
+                                back = input("you have no strength left to fight. Would you like to try and escape? (y/n) ")
+                                #This if statement will check if the user wants to try and escape
+                                if back == "y":
+                                    #This line of code will get a random number between 1 and the player's dexterity and assign it to the variable escape_chance
+                                    escape_chance = random.randint(1, cha.dexterity)
+                                    #This if statement will check if the escape chance is greater than 5
+                                    if escape_chance > 5:
+                                        print("You have escaped")
+                                        #This line of code will call the game_loop function from the final_beginning file and pass the player as an argument
+                                        return
+                                    elif escape_chance <= 5:
+                                        print("You have failed to escape")
+                                        print("you are captured by the enemy and killed")
+                                        exit()
+                                elif back == "n":
+                                    print("you do not have enough strength to fight the enemy, the enemy kills you")
                                     exit()
-                            elif back == "n":
-                                print("you do not have enough strength to fight the enemy, the enemy kills you")
-                                exit()
                         #This if statement will check if the user's input is invalid
                         #If the user's input for the force is invalid, print an error message and continue to the next iteration of the loop
 
@@ -380,55 +401,58 @@ def fight():
                             continue
                             
                         else:
-                            # If the enemy's block amount is less than the force of the attack, then the attack gets through
-                            # and the enemy takes damage
-                            if enemy_block_amount < forces:
-                                # Calculate the damage
-                                damage = forces - enemy_block_amount
-                                # Subtract the damage from the enemy's health
-                                enemy_dict[enemy_name]["health"] -= damage
-                                # If the attack has a status effect, then apply the status effect to the enemy
-                                if attack_info["status_effect"] == "Stun":
-                                    enemy.stunned = True
-                                elif attack_info["status_effect"] == "Poison":
-                                    enemy.poisoned = True
-                                elif attack_info["status_effect"] == "Disarm":
-                                    enemy.disarmed = True
-                                # Create a string that says the player hit the enemy for the damage amount
-                                damage_string = f"You hit {enemy.name} for {damage} damage"
-                                # If the enemy's health is greater than 0, then add the enemy's current health to the string
-                                if enemy.check_health(enemy_dict[enemy_name]["health"]) == True:
-                                    damage_string += f", {enemy.name} has {enemy_dict[enemy_name]['health']:.1f} health left"
-                                # If the enemy's health is 0 or less, then add a message to the string saying that the enemy has been defeated
+                            if not enemy.disarmed or not enemy.stunned:
+                                # If the enemy's block amount is less than the force of the attack, then the attack gets through
+                                # and the enemy takes damage
+                                if enemy_block_amount < forces:
+                                    # Calculate the damage
+                                    damage = forces - enemy_block_amount
+                                    # Subtract the damage from the enemy's health
+                                    enemy_dict[enemy_name]["health"] -= damage
+                                    # If the attack has a status effect, then apply the status effect to the enemy
+                                    if attack_info["status_effect"] == "Stun":
+                                        enemy.stunned = True
+                                    elif attack_info["status_effect"] == "Poison":
+                                        enemy.poisoned = True
+                                    elif attack_info["status_effect"] == "Disarm":
+                                        enemy.disarmed = True
+                                    # Create a string that says the player hit the enemy for the damage amount
+                                    damage_string = f"You hit {enemy.name} for {damage} damage"
+                                    # If the enemy's health is greater than 0, then add the enemy's current health to the string
+                                    if enemy.check_health(enemy_dict[enemy_name]["health"]) == True:
+                                        damage_string += f", {enemy.name} has {enemy_dict[enemy_name]['health']:.1f} health left"
+                                    # If the enemy's health is 0 or less, then add a message to the string saying that the enemy has been defeated
+                                    else:
+                                        damage_string += f", {enemy.name} has been defeated"
+                                    # Print the string
+                                    print(damage_string)
+                                    # If the enemy is stunned, print a message saying that the enemy is stunned
+                                    if enemy.stunned:
+                                        print(f"{enemy.name} is stunned")
+                                    # If the enemy is poisoned, print a message saying that the enemy is poisoned
+                                    if enemy.poisoned:
+                                        print(f"{enemy.name} is poisoned")
+                                    # If the enemy is disarmed, print a message saying that the enemy is disarmed
+                                    if enemy.disarmed:
+                                        print(f"{enemy.name} is disarmed")
                                 else:
-                                    damage_string += f", {enemy.name} has been defeated"
-                                # Print the string
-                                print(damage_string)
-                                # If the enemy is stunned, print a message saying that the enemy is stunned
-                                if enemy.stunned:
-                                    print(f"{enemy.name} is stunned")
-                                # If the enemy is poisoned, print a message saying that the enemy is poisoned
-                                if enemy.poisoned:
-                                    print(f"{enemy.name} is poisoned")
-                                # If the enemy is disarmed, print a message saying that the enemy is disarmed
-                                if enemy.disarmed:
-                                    print(f"{enemy.name} is disarmed")
-                            else:
-                                # If the enemy's block amount is greater than or equal to the force of the attack, then the attack is blocked
-                                print(f"{enemy.name} blocks the attack")
-                        break
+                                    # If the enemy's block amount is greater than or equal to the force of the attack, then the attack is blocked
+                                    print(f"{enemy.name} blocks the attack")
+                            break
                     elif do.lower() == "2":
                         print("You have the following food items in your inventory:")
                         options = []
                         for i, item in enumerate(inventory):
                             if item.type == "food":
                                 print(f"{i+1}. {item.name}")
-                                options.append(item.name)
-                        eat = input("What food do you want to eat? ")
+                                options.append(i+1)
+                        eat = int(input("What food do you want to eat? Enter the number: "))
                         if eat in options:
-                            item = next((item for item in inventory if item.name == eat), None)
+                            item = next((item for item in inventory if inventory.index(item) == eat-1), None)
                             bonus = item.health_increase
-                            print(f"You eat the {item.name} and gain {bonus} health")
+                            bonusstr = item.strength_increase
+                            print(f"You eat the {item.name} and gain {bonus} health and {bonusstr} strength.")
+                            cha.strength += bonusstr
                             cha.health += bonus
                             inventory.remove(item)
                             continue
@@ -453,7 +477,7 @@ def fight():
                     enemy_stun_time += 1
                 while enemy.health > 0 and not enemy.stunned and not enemy.disarmed:
                     # Select a random attack for the enemy to do
-                    if enemy.disarmed or enemy.stunned == True:
+                    if enemy.disarmed == True:
                         print(f"{enemy.name} is unable to attack")
                         bravery = random.randint(1, enemy.wisdom) 
                         if bravery <= 10:
@@ -462,6 +486,7 @@ def fight():
                             break
                         elif bravery > 10:
                             print("The enemy manages to get his sword back")
+                            enemy.disarmed = False
                             enemy_dict[enemy_name]["strength"] -= 10
                     enemy_attack = attack_menu()
                     enemy_force = random.randint(1, enemy.strength)

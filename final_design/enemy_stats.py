@@ -5,19 +5,20 @@ def generate_random_attributes(name: str) -> dict[str, Any]:
     attributes = {
         "name": name,
         "coins": random.randint(10, level * 20),
-        "strength": random.randint(20, level),
+        "strength": random.randint(10, level),
         "dexterity": random.randint(20, level),
         "constitution": random.randint(20, level),
         "intelligence": random.randint(20, level),
         "wisdom": random.randint(20, level),
         "health": random.randint(30, health_level),
         "distance": random.randint(300, 500),
-        "xp": level * 2
+        "xp": level * 2,
+        "coins": random.randint(lvl*10, lvl * 100),
     }
     return attributes
 inventory: dict[str, Any] = {"Ilkwa": {"price": 50, "weight": 3, "length": 0.9, "type": "sword"},}
 from character_stats import lvl
-level = lvl * 40
+level = lvl * 30
 health_level = lvl * 50
 def make_enemies(num_enemies: int) -> dict[str, Any]:
     enemy_dict = {}

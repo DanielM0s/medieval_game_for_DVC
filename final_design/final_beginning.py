@@ -47,9 +47,9 @@ class Player:
         # Set the player's starting level to 1
         self.level = 1
         # Set the player's starting XP to 0
-        stats_dict["xp"] = 0
+        stats_dict["xp"] = 460
         # Set the amount of XP needed to level up to 10
-        self.xp_to_next_level = 500
+        self.xp_to_next_level = self.level * 500
         # Set the set of locations the player has visited to an empty set
         self.visited_locations = set()
 
@@ -83,8 +83,36 @@ class Player:
         # Set the amount of XP needed to level up to double its current value
         self.xp_to_next_level *= 2
         # Print out a message to the player that they leveled up
-        print(f"Congratulations! You've reached level {self.level}!")
-        character_stats.level_up(stats_dict)
+        print(f"you have leveled up to level {character_stats.lvl}. You have 5 points to split between your stats. your stats are: ")
+        while True:
+            try:
+                for stat in main_stats:
+                    print(stat)
+                stat = input("Choose a stat to allocate points to: ")
+                if stat in main_stats:
+                    try:
+                        value = int(input(f"{stat}: "))
+                        if value < 0:
+                            print("Invalid input. Please enter a valid number.")
+                            value = None
+                        else:
+                            stats_dict[stat] = int(stats_dict[stat]) + value
+                    except ValueError:
+                        print("Invalid input. Please enter a valid number.")
+                        value = None
+                stats_dict["points"] = minus_points(stats_dict["points"], value)
+                print(f"{stat} now has {stats_dict[stat]}")
+                print(f"You have {stats_dict['points']} points left.")
+                if stats_dict["points"] == 0:
+                    break
+                elif stats_dict["points"] < 0:
+                    print("you have exceeded your allocated points please try again")
+                    stats_dict["points"] = 20
+                    stats_dict[stat] = stats_dict[stat] - value
+                    continue
+            except ValueError:
+                print("Invalid input. Please enter a valid statistic.")
+                value = None
         # Call the unlock_new_areas method to unlock new areas for the player
         self.unlock_new_areas()
 
@@ -166,6 +194,8 @@ class Player:
 
         else:
             print("You can't go there from here.")
+    
+
 # Define game locations
 village = Location("Your home village", "The familiar smells of home greet you like an old friend.")
 cattle_kraal = Location("Cattle Kraal", "You are in the central cattle kraal, where the village's cattle are kept. The air is filled with the sounds of livestock.")
@@ -260,14 +290,14 @@ def fight_flight():
 def encounter_soldiers(player):
     try:
         from enemy_stats import enemy_dict
-        number_of_enemies = random.randint(character_stats.lvl*2, character_stats.lvl*4)
+        number_of_enemies = random.randint(character_stats.lvl*1, character_stats.lvl*3)
         enemy_dict.update(enemy_stats.new_enemy(number_of_enemies))
 
         fighting = fight_flight()                
         if fighting == 1:
             print("You have the following weapons in your inventory:")
-            sword_list = [item for item in inventory if item.name == "Ilkwa" or item.name == "Knobkerrie" or item.name == "Assegai"]
-            bow_list = [item for item in inventory if item.name == "Bow"]
+            sword_list = [item for item in inventory if item.type == "sword"]
+            bow_list = [item for item in inventory if item.type == "bow"]
             if not sword_list and not bow_list:
                 print("You need a sword or bow to fight")
                 return encounter_soldiers(player)
@@ -279,19 +309,15 @@ def encounter_soldiers(player):
                 choice = int(input("Which weapon would you like to use? (Enter the number) "))
                 if 1 <= choice <= len(inventory):
                     chosen_weapon = inventory[choice - 1]
-                    if chosen_weapon.name == "Ilkwa" or chosen_weapon.name == "Knobkerrie" or chosen_weapon.name == "Assegai":
+                    if chosen_weapon.type == "sword":
                         print(f"You have chosen to use your {chosen_weapon.name}. Good luck!")
                         print(f"You draw your {chosen_weapon.name} and prepare to fight. The enemy soldiers charge at you. You swing your sword and prepare to face them.")
                         from fighting_final import fight
                         fight()             
-                    elif chosen_weapon.name == "Bow":
+                    elif chosen_weapon.type == "bow":
                         print("You have chosen to use your Bow. Good luck!")
                         hints = input("would you like to activate hints? y/n ")
                         import bow_calculator
-                        if hints == "y":
-                            bow_calculator.hint = True
-                        elif hints == "n":
-                            bow_calculator.hint = False
                         from bow_calculator import archer_fight
                         archer_fight()
                 else:
@@ -300,7 +326,7 @@ def encounter_soldiers(player):
             except ValueError:
                 print("Invalid input. Please enter a number.")
                 return encounter_soldiers(player)
-        elif fighting.lower() == 2:
+        elif fighting == 2:
             sneak =random.randint(1, stats_dict["dexterity"])
             if sneak >= 5:
                 print("You successfully sneak past the enemy soldiers.")
@@ -469,7 +495,7 @@ while True:
 coins = stats_dict["coins"]
 print("Next you need to choose your weapons. You should have enough money to buy at least one weapon, choose between meele weapons and ranged weapons depending on how you want to attack your enemies, but remember to buy arrows for your ranges weapon, especially if you don't have a meele weapon, because when you run out of arrows you need to find a way to escape, or use your meele weapon, but remember to buy food as well, as it provides you with health. If you don't have enough money to buy what you want now don't worry, you can loot your enemies after you have defeated them. ")
 guide = input("would you like to see the weapon guide? (recommended for beginners): ")
-if guide.lower() == "yes":
+if guide.lower() == "y":
     weapons = [
         ("\033[31mIlkwa\033[0m", "a spear that was originally introduced by Shaka Zulu, because when they fought in his father's time they would throw their spears at each other, then use each other's spears until they were out of spears, but by using the short spear, they would hold onto there weapons", 0.9),
         ("\033[32mAssegai\033[0m", "a light throwing-spear used in both hunting and war, typically around 1.8 meters long with a 15.2 centimeter long steel head", 1.8),
@@ -534,14 +560,14 @@ def village_entry():
             print(e)
 
 def home():
-    while True:
-        
+    while True:            
+        print("you are back to full strength and full health.")
         vil = village_entry()
         if vil == 0:
             final_shop.medieval_shop()
         elif vil == 1:
             try:
-                training_points = character_stats.lvl * 2
+                training_points = character_stats.lvl * 3
                 print("You have " + str(training_points) + " training points.")
                 while training_points > 0:
                     print("You can choose to do the following activities:")
@@ -580,6 +606,9 @@ def home():
                 for item in inventory:
                     if item.type == "sword" or item.type == "bow":
                         print(f"You have a {item}. Good luck!")
+                        print(pyfiglet.figlet_format("Welcome to the Enemy's Village"))
+                        player = Player(stats_dict["name"])
+                        game_loop(player)
                         break
                     else:
                         print("You didn't buy any weapons. You have been refunded your original amount of money and all items have been removed from your inventory.")
@@ -587,11 +616,6 @@ def home():
                         stats_dict["coins"] = coins
                         break
                 
-                print(pyfiglet.figlet_format("Welcome to the Enemy's Village"))
-                player = Player(stats_dict["name"])
-                game_loop(player)
-                
-                break
             except Exception as e:
                 print("An error occurred. Please try again.")
                 continue
