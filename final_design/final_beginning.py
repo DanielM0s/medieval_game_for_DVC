@@ -318,8 +318,8 @@ def encounter_soldiers(player):
                         print("You have chosen to use your Bow. Good luck!")
                         hints = input("would you like to activate hints? y/n ")
                         import bow_calculator
-                        from bow_calculator import archer_fight
-                        archer_fight()
+                        from bow_calculator import start_archery
+                        start_archery()
                 else:
                     print("Invalid input. Please enter a number of a sword or bow in your inventory.")
                     return encounter_soldiers(player)

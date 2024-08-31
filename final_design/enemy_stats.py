@@ -12,6 +12,7 @@ def generate_random_attributes(name: str) -> dict[str, Any]:
         "wisdom": random.randint(20, level),
         "health": random.randint(30, health_level),
         "distance": random.randint(300, 500),
+        "height": 2.5,
         "xp": level * 2,
         "coins": random.randint(lvl*10, lvl * 100),
     }

@@ -233,7 +233,7 @@ def upgrade_inventory(coins, inventory, shop):
         while True:
             try:
                 item_choice = int(input("Enter the name or number of the item you want to upgrade(type n to exit): "))
-                if item_choice == "n":
+                if item_choice == 0:
                     break
                 for i, item in enumerate(inventory, start=1):
                     if i == item_choice or item_choice == item.name:
