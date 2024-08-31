@@ -270,6 +270,7 @@ def fight():
                     else:
                         pass
                     do = input("Would you like to: 1. Attack 2. Eat food 3. Run? ")
+                    print(f"you have {cha.strength} strength left")
                     #This for loop will print out the names of all the enemies in the list of enemies and their stats
                     if do.lower() == "1":
                         for i, (name, stats) in enumerate(enemy_dict.items()):
@@ -322,48 +323,53 @@ def fight():
                             attack = input("Select an attack: ")
                         #This input will ask the user how much force they want to hit the enemy with
                         forces = int(input(f"How much force do you want to hit them with? "))
+                        forces = cha.attack(forces)
                         #This if statement will check if the player has any strength left
                         if cha.strength <= 0:
                             #This input will ask the user if they want to try and escape
-                            if any(item["type"] == "food" for item in inventory):
+                            if any(item.type == "food" for item in inventory):
                                 print("You have some food in your inventory. You can eat it to regain health.")
-                                for item in inventory:
-                                    if item["type"] == "food":
-                                        print(item["name"])
-                                food_choice = input("Which food do you want to eat? ")
-                                for item in inventory:
-                                    if item["name"] == food_choice and item["type"] == "food":
-                                        cha.health += item["health_increase"]
-                                        print(f"You regained {item['health_increase']} health.")
-                                        inventory.remove(item)
-                                        break
+                                options = []
+                                for i, item in enumerate(inventory):
+                                    if item.type == "food":
+                                        print(f"{i+1}. {item.name}")
+                                        options.append(i+1)
+                                eat = int(input("What food do you want to eat? Enter the number: "))
+                                if eat in options:
+                                    item = next((item for item in inventory if inventory.index(item) == eat-1), None)
+                                    bonus = item.health_increase
+                                    bonusstr = item.strength_increase
+                                    print(f"You eat the {item.name} and gain {bonus} health and {bonusstr} strength.")
+                                    cha.strength += bonusstr
+                                    cha.health += bonus
+                                    inventory.remove(item)
+                                    continue
                                 else:
-                                    print("You don't have that food in your inventory.")
+                                    print("Invalid input")
+                                    continue
                             else:
-                                print("You don't have any food in your inventory.")
-                            if cha.strength <= 0:
-                                back = input("you have no strength left to fight. Would you like to try and escape? (y/n) ")
-                                #This if statement will check if the user wants to try and escape
-                                if back == "y":
-                                    #This line of code will get a random number between 1 and the player's dexterity and assign it to the variable escape_chance
-                                    escape_chance = random.randint(1, cha.dexterity)
-                                    #This if statement will check if the escape chance is greater than 5
-                                    if escape_chance > 5:
-                                        print("You have escaped")
-                                        #This line of code will call the game_loop function from the final_beginning file and pass the player as an argument
-                                        return
-                                    elif escape_chance <= 5:
-                                        print("You have failed to escape")
-                                        print("you are captured by the enemy and killed")
+                                while True:
+                                    back = input("you have no strength left to fight. Would you like to try and escape? (y/n) ").lower()
+                                    if back == "y":
+                                        escape_chance = random.randint(1, cha.dexterity)
+                                        if escape_chance > 40:
+                                            print("You have escaped")
+                                            return
+                                        elif escape_chance <= 40:
+                                            print("You have failed to escape")
+                                            print("you are captured by the enemy and killed")
+                                            exit()
+                                    elif back == "n":
+                                        print("you do not have enough strength to fight the enemy, the enemy kills you")
                                         exit()
-                                elif back == "n":
-                                    print("you do not have enough strength to fight the enemy, the enemy kills you")
-                                    exit()
+                                    else:
+                                        print("Invalid input")
+                                        continue
                         #This if statement will check if the user's input is invalid
                         #If the user's input for the force is invalid, print an error message and continue to the next iteration of the loop
 
                         #Call the attack method from the player class and pass the user's input for the force as an argument
-                        forces = cha.attack(forces)
+                        
                         #Multiply the force by the damage amount from the attack
                         forces = forces * attack_info["damage"]
                         #Get a random number between 1 and 10 and assign it to the variable enemy_chance_of_block

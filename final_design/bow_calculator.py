@@ -46,7 +46,6 @@ class Enemy:
             return False
         else:
             return True
-
 def start_archery():
     # a function to start a fight
     enemy_backup = 0
@@ -61,12 +60,34 @@ def start_archery():
         if i.name == "arrow x10":
             arrow = i
             amarrows += 1
-    amarrows *= 10
+    amarrows *= 10    
     guide = input("Would you like to learn how to fight? (y/n) ")
     if guide.lower() == "y":
         print("The distance your arrow is dependant on three factors, how much force you apply, how far you pull the string back and the angle at which you fire the bow. Beware, if you apply too much force, or pull the string back too far, you will break the bow and will have to buy a new one. If your bow breaks you will have to use a melee weapon in order to defen yourself from the enemy. the recommended angle to shoot the bow is 45 degrees.")
     #This while loop will continue to run until the player has defeated all the enemies
     while True:
+        if amarrows <= 0:
+            print("you have no arrows left")
+            while True:
+                fight_flight = int(input("would you like to 1. use your melee weapon to fightor 2. run away "))
+                if fight_flight == 1:
+                    for item in inventory:
+                        if item.type == "sword":
+                            return False
+                        else:
+                            print("you need a sword to fight")
+                            continue
+                if fight_flight == 2:
+                    away = random.randint(1, stats_dict["dexterity"])
+                    if away >= 1:
+                        print("you managed to get away")
+                        return False
+                    elif away < 1:
+                        print("As you try to run away the enemy captures you and kills you")
+                        exit()
+                else:
+                    print("invalid input")
+                    continue
         #If the player's health is 0 or less they lose the game
         #If the enemy's health is 0 or less they have been defeated and are removed from the list of enemies
         if Enemy.check_health == False:
@@ -112,31 +133,6 @@ def archer_fight(bow, arrow, enemy, am_arrows):
                 print("You have defeated all the enemies. Well done!")
                 return
             enemies = enemy_dict
-            if am_arrows <= 0:
-                print("you have no arrows left")
-                while True:
-                    fight_flight = int(input("would you like to 1. use your melee weapon to fightor 2. run away "))
-                    if fight_flight == 1:
-                        for item in inventory:
-                            if item.type == "sword":
-                                from fighting_final import fight
-                                fight()
-                            else:
-                                print("you need a sword to fight")
-                                continue
-                    if fight_flight == 2:
-                        away = random.randint(1, stats_dict["dexterity"])
-                        if away >= 10:
-                            print("you managed to get away")
-                            from final_beginning import game_loop
-                            game_loop()
-                            break
-                        elif away < 10:
-                            print("As you try to run away the enemy captures you and kills you")
-                            exit()
-                    else:
-                        print("invalid input")
-                        continue
             print(f"Enemy distance: {enemy.distance} Enemy height: {enemy.height}")
             force = get_valid_force_input("how much force do you want to apply? ")
             length = get_valid_length_input("how far do you pull the string back in cm? ")

@@ -86,33 +86,27 @@ class Player:
         print(f"you have leveled up to level {character_stats.lvl}. You have 5 points to split between your stats. your stats are: ")
         while True:
             try:
-                for stat in main_stats:
-                    print(stat)
-                stat = input("Choose a stat to allocate points to: ")
-                if stat in main_stats:
-                    try:
-                        value = int(input(f"{stat}: "))
-                        if value < 0:
-                            print("Invalid input. Please enter a valid number.")
-                            value = None
-                        else:
-                            stats_dict[stat] = int(stats_dict[stat]) + value
-                    except ValueError:
-                        print("Invalid input. Please enter a valid number.")
-                        value = None
-                stats_dict["points"] = minus_points(stats_dict["points"], value)
-                print(f"{stat} now has {stats_dict[stat]}")
-                print(f"You have {stats_dict['points']} points left.")
-                if stats_dict["points"] == 0:
-                    break
-                elif stats_dict["points"] < 0:
-                    print("you have exceeded your allocated points please try again")
-                    stats_dict["points"] = 20
-                    stats_dict[stat] = stats_dict[stat] - value
+                for index, stat in enumerate(main_stats):
+                    print(f"{index+1}. {stat}")
+                choice = int(input("Choose a number to allocate points to: "))
+                if choice < 1 or choice > len(main_stats):
+                    print("Invalid input. Please enter a valid number.")
                     continue
+                stat = main_stats[choice-1]
+                value = int(input(f"{stat}: "))
+                if value < 0:
+                    print("Invalid input. Please enter a valid number.")
+                    continue
+                else:
+                    stats_dict[stat] = int(stats_dict[stat]) + value * 20
             except ValueError:
-                print("Invalid input. Please enter a valid statistic.")
-                value = None
+                print("Invalid input. Please enter a valid number.")
+                continue
+            stats_dict["points"] = minus_points(stats_dict["points"], value)
+            print(f"{stat} now has {stats_dict[stat]}")
+            print(f"You have {stats_dict['points']} points left.")
+            if stats_dict["points"] <= 0:
+                break
         # Call the unlock_new_areas method to unlock new areas for the player
         self.unlock_new_areas()
 
@@ -226,7 +220,7 @@ village_entrance.add_connection(enemy_village)
 village_entrance.add_connection(cattle_kraal)
 
 
-global train_points
+
 
 def game_loop(player):
     while True:
@@ -336,7 +330,8 @@ def encounter_soldiers(player):
                 return encounter_soldiers(player)
         elif fighting == 3:
             print("You turn around and run away. You manage to escape the enemy village.")
-            village_entry()
+            home()
+            return
         else:
             print("Invalid input. Please enter 'fight', 'run', or 'sneak'")
             return encounter_soldiers(player)
@@ -603,17 +598,22 @@ def home():
                 continue
         elif vil == 2:
             try:
-                for item in inventory:
-                    if item.type == "sword" or item.type == "bow":
-                        print(f"You have a {item}. Good luck!")
+                weapo = 0
+                while True:
+                    for item in inventory:
+                        if item.type == "sword" or item.type == "bow":
+                            weapo += 1
+                    if weapo >= 1:    
+                        print(f"You have a {item.name}. Good luck!")
                         print(pyfiglet.figlet_format("Welcome to the Enemy's Village"))
                         player = Player(stats_dict["name"])
                         game_loop(player)
                         break
-                    else:
+                    elif weapo == 0:
                         print("You didn't buy any weapons. You have been refunded your original amount of money and all items have been removed from your inventory.")
                         inventory.clear()
                         stats_dict["coins"] = coins
+                        final_shop.medieval_shop()
                         break
                 
             except Exception as e:
