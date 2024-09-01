@@ -238,6 +238,7 @@ def game_loop(player):
     player : Player
         The player object to move around the game world.
     """
+    
     while True:
         #[print the current location and description]
         print(f"\nYou are at: {player.location.name}")
@@ -617,7 +618,7 @@ def village_entry():
             # in their inventory all items from their inventory will be removed
             # and they will be given the money to buy a weapon
             print("\033[91mWarning, if you don't have any weapons in your inventory all items from your inventory will be removed and you will be given the money to buy a weapon\033[0m")
-
+            
             # Ask the player what they want to do
             begin = input("You start in the ruins of your home town. You can choose to 1. go to shop, 2. train, 3. fight, or Q to quit. What would you like to do? ")
 
@@ -662,10 +663,8 @@ def home():
     while True:            
         # Print a message to the player indicating that they are back to full strength and full health
         print("You are back to full strength and full health.")
-        # Get the total strength of the player from the character_stats module
-        from character_stats import total_strength
-        # Add the total strength to the player's strength
-        stats_dict["strength"] += total_strength
+        # 
+        
         # Call the village_entry function to get the player's choice of what to do
         vil = village_entry()
         # If the player chooses to go to the shop, call the medieval_shop function

@@ -14,7 +14,6 @@ from PIL import Image, ImageDraw
 
 
 
-
 class character:
     # the character class, which contains the player's stats
     def __init__(self, stats_dict):
@@ -25,6 +24,7 @@ class character:
         self.name = stats_dict["name"]
         self.coins = stats_dict["coins"]
         self.strength = stats_dict["strength"]
+        self.original_strength = stats_dict["strength"]
         self.dexterity = stats_dict["dexterity"]
         self.constitution = stats_dict["constitution"]
         self.intelligence = stats_dict["intelligence"]
@@ -52,8 +52,6 @@ class character:
                     damage = int(damage * 2)
                 break
         self.strength -= force
-        from character_stats import total_strength
-        total_strength += force
         return damage
 
     def counter_attack(self, force):
@@ -159,6 +157,7 @@ def fight():
     enemies = enemy_dict
     stun_time = 0
     enemy_stun_time = 0
+    cha.strength = stats_dict["strength"]
     #This while loop will continue to run until the player has defeated all the enemies
     while True:
         #If the player's health is 0 or less they lose the game
@@ -277,8 +276,8 @@ def fight():
                                 break
                             except KeyError:
                                 print("Invalid attack. Please select one from the following:")
-                                for key, value in attack_types.items():
-                                    print(f"{key}. {value}")
+                                for att, att_info in attack_types.items():
+                                    print(att, att_info["name"])
                         
                         #This while loop will continue to ask the user for input until they enter a valid attack
                         while attack not in attack_types:
@@ -412,26 +411,28 @@ def fight():
                                     print(f"{enemy.name} blocks the attack")
                             break
                     elif do.lower() == "2":
-                        if any(item.type == "food" for item in inventory):
-                            print("You have some food in your inventory. You can eat it to regain health.")
-                            options = []
-                            for i, item in enumerate(inventory):
-                                if item.type == "food":
-                                    print(f"{i+1}. {item.name}")
-                                    options.append(i+1)
-                            eat = int(input("What food do you want to eat? Enter the number: "))
-                            if eat in options:
-                                item = next((item for item in inventory if inventory.index(item) == eat-1), None)
-                                bonus = item.health_increase
-                                bonusstr = item.strength_increase
-                                print(f"You eat the {item.name} and gain {bonus} health and {bonusstr} strength.")
-                                cha.strength += bonusstr
-                                cha.health += bonus
-                                inventory.remove(item)
-                                continue
-                            else:
-                                print("Invalid input")
-                                continue
+                        while True:
+                            try:
+                                options = [item for item in inventory if item.type == "food"]
+                                if not options:
+                                    print("You have no food.")
+                                    break
+                                print("You have the following food items in your inventory:")
+                                for i, item in enumerate(options, start=1):
+                                    print(f"{i}. {item.name}")
+                                eat = int(input("What food do you want to eat? Enter the number: "))
+                                if eat in range(1, len(options)+1):
+                                    item = options[eat-1]
+                                    bonus = item.health_increase
+                                    bonusstr = item.strength_increase
+                                    print(f"You eat the {item.name} and gain {bonus} health and {bonusstr} strength.")
+                                    stats_dict["strength"] += bonusstr
+                                    stats_dict["health"] += bonus
+                                    inventory.remove(item)
+                                    continue
+                            except ValueError:
+                                print("invalid input")
+                        continue
                     elif do.lower() == "3":
                         roll = random.randint(1,20)
                         if roll + cha.dexterity >= 15:

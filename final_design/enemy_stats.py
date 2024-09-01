@@ -39,7 +39,7 @@ inventory: dict[str, Any] = {"Ilkwa": {"price": 50, "weight": 3, "length": 0.9, 
 
 # This is the level of the player
 from character_stats import lvl
-level = lvl * 80
+level = lvl * 60
 start = lvl * 30
 health_level = lvl * 100
 start_health = start * 70

@@ -30,6 +30,4 @@ inventory = []
 # This is the player's level
 lvl = 1
 
-# This is the player's total strength
-total_strength = 0
 
