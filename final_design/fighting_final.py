@@ -29,7 +29,7 @@ class character:
         self.constitution = stats_dict["constitution"]
         self.intelligence = stats_dict["intelligence"]
         self.wisdom = stats_dict["wisdom"]
-        self.health = stats_dict["constitution"] * 3
+        self.health = stats_dict["constitution"] * 2
         self.stunned = False
         self.poisoned = False
         self.disarmed = False
@@ -52,6 +52,8 @@ class character:
                     damage = int(damage * 2)
                 break
         self.strength -= force
+        from character_stats import total_strength
+        total_strength += force
         return damage
 
     def counter_attack(self, force):
@@ -192,36 +194,17 @@ def fight():
                 cha.stunned = False
             if cha.stunned == True:
                 stun_time += 1
-            if cha.disarmed == True:
-                try:
-                    if cha.strength <= 3:
-                        run = input("you don't have enough strength to get your weapon back, would you like to try and run away(type y or n)? ")
-                        if run.lower() == "y":
-                            away = random.randint(1, cha.dexterity)
-                            if away >= 10:
-                                print("you managed to get away")
-                                return
-                            elif away < 10:
-                                print("As you try to run away the enemy captures you and kills you")
-                                exit()
-                        elif run.lower() == "n":
-                            print("the enemy easily captures you and kills you")
-                            exit()
-                        else:
-                            print("invalid input")
-                            print("please type y or n")
-                            continue
-                    else:
-                        get_weapon = random.randint(1, cha.strength)
-                        if get_weapon <= 10:
-                            print("you managed to get your weapon back at the cost of 3 strength")
-                            cha.strength -= 3
-                        else:
-                            run = input("you failed to get your weapon back. would you like to try and run away(type y or n)? ")
+            
+            while cha.stunned == False:
+                if cha.disarmed == True:
+                    try:
+                        if cha.strength <= 3:
+                            run = input("you don't have enough strength to get your weapon back, would you like to try and run away(type y or n)? ")
                             if run.lower() == "y":
                                 away = random.randint(1, cha.dexterity)
                                 if away >= 10:
                                     print("you managed to get away")
+                                    cha.disarmed = False
                                     return
                                 elif away < 10:
                                     print("As you try to run away the enemy captures you and kills you")
@@ -233,35 +216,17 @@ def fight():
                                 print("invalid input")
                                 print("please type y or n")
                                 continue
-                except ValueError:
-                    print("you didn't manage to get your weapon back")
-            while cha.stunned == False:
-            #This try and except block will continue to ask the user for input until they enter a valid input
-                try:
-                    if cha.disarmed == True:
-                        weapon = input("do you want to try and get your weapon back? ")
-                        if weapon.lower() == "y":
+                        else:
                             get_weapon = random.randint(1, cha.strength)
                             if get_weapon <= 10:
                                 print("you managed to get your weapon back at the cost of 3 strength")
                                 cha.strength -= 3
-                            else:
-                                run = input("you failed to get your weapon back. would you like to try and run away(type y or n)? ")
-                                if run.lower() == "y":
-                                    away = random.randint(1, cha.dexterity)
-                                    if away >= 10:
-                                        print("you managed to get away")
-                                        return
-                                    elif away < 10:
-                                        print("As you try to run away the enemy captures you and kills you")
-                                        exit()
-                                elif run.lower() == "n":
-                                    print("the enemy easily captures you and kills you")
-                                    exit()
-                                else:
-                                    print("invalid input")
-                                    print("please type y or n")
-                                    continue
+                    except ValueError:
+                        print("you didn't manage to get your weapon back")
+                        print("the enemy easily captures you and kills you")
+                        exit()
+            #This try and except block will continue to ask the user for input until they enter a valid input
+                try:
                     if len(enemies) == 0:
                         print("you have defeated all the enemies")
                         print("well done, onto the next battle")
@@ -270,9 +235,10 @@ def fight():
                     else:
                         pass
                     do = input("Would you like to: 1. Attack 2. Eat food 3. Run? ")
-                    print(f"you have {cha.strength} strength left")
+                    
                     #This for loop will print out the names of all the enemies in the list of enemies and their stats
                     if do.lower() == "1":
+                        print(f"you have {cha.strength} strength left")
                         for i, (name, stats) in enumerate(enemy_dict.items()):
                             print(f"{i+1}. {name}")
                         
@@ -288,17 +254,17 @@ def fight():
                         enemy = Enemy(enemy_name)
 
                         #This line of code will get a random number between 8 and the enemy's dexterity and assign it to the variable enemy_chance_of_block
-                        enemy_chance_of_block = random.randint(8, enemy.dexterity)
+                        enemy_chance_of_block = random.randint(20, enemy.dexterity)
                         #This line of code will get a random number between 10 and the enemy's strength and assign it to the variable enemy_block_amount
                         enemy_block_amount = random.randint(8, enemy.strength)  
                         #This dictionary will contain all the attacks that the player can use and their stats
                         attack_types = {
-                        "1": {"name": "Slash", "damage": 1.2, "block": 0.8, "status_effect": None},
-                        "2": {"name": "Thrust", "damage": 1.5, "block": 0.5, "status_effect": None},
-                        "3": {"name": "Parry", "damage": 0.5, "block": 1.5, "status_effect": "Counter"},
-                        "4": {"name": "Riposte", "damage": 1.3, "block": 1.0, "status_effect": "Stun"},
-                        "5": {"name": "Feint", "damage": 0.7, "block": 0.7, "status_effect": "Confuse"},
-                        "6": {"name": "Guard Break", "damage": 1.0, "block": 0.3, "status_effect": "Disarm"}
+                        "1": {"name": "Slash", "damage": 1, "block": 0.8, "status_effect": None},
+                        "2": {"name": "Thrust", "damage": 1.2, "block": 0.5, "status_effect": None},
+                        "3": {"name": "Parry", "damage": 0.8, "block": 1.5, "status_effect": "Counter"},
+                        "4": {"name": "Riposte", "damage": 0.7, "block": 1.0, "status_effect": "Stun"},
+                        "5": {"name": "Feint", "damage": 1.4, "block": 0.7, "status_effect": "Confuse"},
+                        "6": {"name": "Guard Break", "damage": 0.5, "block": 0.3, "status_effect": "Disarm"}
                         }
                         #This for loop will print out all the attacks in the dictionary and their stats
                         for att, att_info in attack_types.items():
@@ -354,7 +320,7 @@ def fight():
                                         escape_chance = random.randint(1, cha.dexterity)
                                         if escape_chance > 40:
                                             print("You have escaped")
-                                            return
+                                            return                                            
                                         elif escape_chance <= 40:
                                             print("You have failed to escape")
                                             print("you are captured by the enemy and killed")
@@ -373,7 +339,7 @@ def fight():
                         #Multiply the force by the damage amount from the attack
                         forces = forces * attack_info["damage"]
                         #Get a random number between 1 and 10 and assign it to the variable enemy_chance_of_block
-                        if enemy_chance_of_block < 10:
+                        if enemy_chance_of_block <= forces:
                             #If the enemy's block chance is less than 10, then the enemy will block the attack
                             #If the attack has a status effect, then apply the status effect to the enemy
                             if attack_info["status_effect"] == "Stun":
@@ -446,22 +412,26 @@ def fight():
                                     print(f"{enemy.name} blocks the attack")
                             break
                     elif do.lower() == "2":
-                        print("You have the following food items in your inventory:")
-                        options = []
-                        for i, item in enumerate(inventory):
-                            if item.type == "food":
-                                print(f"{i+1}. {item.name}")
-                                options.append(i+1)
-                        eat = int(input("What food do you want to eat? Enter the number: "))
-                        if eat in options:
-                            item = next((item for item in inventory if inventory.index(item) == eat-1), None)
-                            bonus = item.health_increase
-                            bonusstr = item.strength_increase
-                            print(f"You eat the {item.name} and gain {bonus} health and {bonusstr} strength.")
-                            cha.strength += bonusstr
-                            cha.health += bonus
-                            inventory.remove(item)
-                            continue
+                        if any(item.type == "food" for item in inventory):
+                            print("You have some food in your inventory. You can eat it to regain health.")
+                            options = []
+                            for i, item in enumerate(inventory):
+                                if item.type == "food":
+                                    print(f"{i+1}. {item.name}")
+                                    options.append(i+1)
+                            eat = int(input("What food do you want to eat? Enter the number: "))
+                            if eat in options:
+                                item = next((item for item in inventory if inventory.index(item) == eat-1), None)
+                                bonus = item.health_increase
+                                bonusstr = item.strength_increase
+                                print(f"You eat the {item.name} and gain {bonus} health and {bonusstr} strength.")
+                                cha.strength += bonusstr
+                                cha.health += bonus
+                                inventory.remove(item)
+                                continue
+                            else:
+                                print("Invalid input")
+                                continue
                     elif do.lower() == "3":
                         roll = random.randint(1,20)
                         if roll + cha.dexterity >= 15:
@@ -470,6 +440,9 @@ def fight():
                         else:
                             print("You fail to run away. The enemy captures and kills you.")
                             exit()
+                    elif do.lower() == "q":
+                        print("thanks for playing!")
+                        exit()
                     else:
                         print("Invalid input. Please try again.")
                         continue
@@ -497,7 +470,7 @@ def fight():
                     enemy_attack = attack_menu()
                     enemy_force = random.randint(1, enemy.strength)
                     chance_of_block = random.randint(1, cha.constitution)
-                    if chance_of_block < 30:
+                    if chance_of_block < 55:
                         # If the enemy's attack is not blocked, then print a message saying the enemy is attacking the player
                         print(f"{enemy.name} starts to attack you with {enemy_attack['name']}")
                         time.sleep(1)
